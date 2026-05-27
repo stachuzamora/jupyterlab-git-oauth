@@ -1,0 +1,187 @@
+.jp-git-diff-error {
+  width: auto;
+  padding: 16px;
+  color: var(--jp-ui-font-color1);
+  font-size: var(--jp-ui-font-size1);
+  background: var(--jp-error-color3);
+}
+
+.jp-git-diff-error-message {
+  color: var(--jp-error-color1);
+  margin-left: 5px;
+}
+
+.jp-git-diff-root {
+  min-width: 2px;
+  min-height: 30px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  background: var(--jp-layout-color0);
+  color: var(--jp-ui-font-color0);
+  padding: 0;
+  overflow: hidden;
+}
+
+.jp-git-diff-root .cm-editor {
+  height: 100%;
+}
+
+button.jp-git-diff-refresh {
+  border: solid 1px var(--jp-warn-color2);
+}
+
+button.jp-git-diff-resolve {
+  border: solid 1px var(--jp-success-color2);
+}
+
+button.jp-git-diff-refresh .jp-ToolbarButtonComponent-label {
+  color: var(--jp-warn-color1);
+}
+
+button.jp-git-diff-resolve .jp-ToolbarButtonComponent-label {
+  color: var(--jp-success-color1);
+}
+
+.jp-git-diff-banner,
+.jp-git-merge-banner {
+  flex: 0 0 auto;
+  margin: 2px 0;
+  display: grid;
+  grid-auto-rows: minmax(18px, auto);
+  width: 100%;
+}
+
+.jp-git-diff-banner {
+  grid-template-columns: 47% 6% 47%;
+}
+
+.jp-git-diff-banner span {
+  padding: 0 4px;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jp-git-merge-banner span {
+  padding: 0 4px;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jp-git-diff-banner span:first-child {
+  grid-column: 1;
+}
+
+.jp-git-diff-banner span:last-child {
+  grid-column: 3;
+}
+
+.jp-git-diff-banner span:first-of-type {
+  background-color: var(--jp-git-diff-deleted-color1);
+}
+
+.jp-git-diff-banner span:last-of-type {
+  background-color: var(--jp-git-diff-added-color1);
+}
+
+.jp-git-merge-banner {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.jp-git-merge-banner span:first-of-type {
+  background-color: var(--jp-merge-local-color1);
+}
+
+.jp-git-merge-banner span:last-of-type {
+  background-color: var(--jp-git-diff-added-color1);
+}
+
+.jp-git-diff-root .cm-merge {
+  position: relative;
+  white-space: pre;
+  border: var(--codemirror-border);
+  border-radius: 0;
+  background: var(--jp-cell-editor-background);
+}
+
+.jp-git-diff-root .cm {
+  background: var(--jp-layout-color0);
+}
+
+.jp-git-diff-root .cm-merge,
+.cm-merge .cm {
+  height: auto;
+}
+
+.jp-git-diff-root .cm-merge-4pane .cm-merge-pane-deleted {
+  display: none;
+}
+
+.jp-git-diff-root .cm-merge-pane-unchanged {
+  width: 100%;
+}
+
+.jp-git-diff-root .cm-merge-pane {
+  display: inline-block;
+  white-space: normal;
+  vertical-align: top;
+}
+
+.jp-git-diff-root .cm-merge-pane-rightmost {
+  position: absolute;
+  right: 0;
+  z-index: 1;
+}
+
+.jp-Notebook-merge .jp-Merge-conflict {
+  background-color: var(--jp-merge-both-color2);
+}
+
+.jp-git-diff-root .cm-merge-r-deleted,
+.jp-git-diff-root .cm-merge-l-deleted,
+.jp-git-diff-root .cm-diff-left-editor .cm-merge-r-chunk {
+  background-color: var(--jp-git-diff-deleted-color);
+}
+
+.jp-git-diff-root
+  .cm-merge-left-editor
+  .cm-merge-l-chunk:not(.jp-Merge-conflict) {
+  background-color: var(--jp-merge-local-color);
+}
+
+.jp-git-diff-root .cm-merge-r-inserted,
+.jp-git-diff-root .cm-merge-l-inserted,
+.jp-git-diff-root .cm-diff-right-editor .cm-merge-r-chunk,
+.jp-git-diff-root .cm-merge-right-editor .cm-merge-r-chunk {
+  background-color: var(--jp-git-diff-added-color);
+}
+
+.jp-git-diff-root .cm-merge-left-editor .cm-merge-l-inserted {
+  background-color: var(--jp-merge-local-color1);
+}
+
+.jp-git-diff-root .cm-merge-spacer {
+  background-image: repeating-linear-gradient(
+    145deg,
+    transparent,
+    transparent 10px,
+    var(--jp-border-color0) 10px,
+    var(--jp-border-color0) 12px
+  );
+}
+
+/* Hide drag handles */
+.jp-git-diff-root .jp-Notebook-merge .jp-DragPanel-dragHandle {
+  display: none;
+}
+
+.jp-git-diff-parent-widget .jp-Merge-notebook-controls {
+  margin-bottom: 0;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+}

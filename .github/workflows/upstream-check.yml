@@ -1,0 +1,86 @@
+name: Upstream release check
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"  # Every Monday 8am UTC
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get current fork version
+        id: current
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get latest upstream release
+        id: upstream
+        run: |
+          RESPONSE=$(curl -s -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/jupyterlab/jupyterlab-git/releases/latest)
+          TAG=$(echo "$RESPONSE" | jq -r '.tag_name')
+          VER="${TAG#v}"
+          URL=$(echo "$RESPONSE" | jq -r '.html_url')
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VER" >> $GITHUB_OUTPUT
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Open issue if upstream is newer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT: ${{ steps.current.outputs.version }}
+          UPSTREAM_TAG: ${{ steps.upstream.outputs.tag }}
+          UPSTREAM_VER: ${{ steps.upstream.outputs.version }}
+          UPSTREAM_URL: ${{ steps.upstream.outputs.url }}
+        run: |
+          # Skip if upstream is not newer (sort -V puts older version first)
+          NEWER=$(printf '%s\n%s' "$CURRENT" "$UPSTREAM_VER" | sort -V | tail -1)
+          if [ "$NEWER" = "$CURRENT" ]; then
+            echo "No update: current=$CURRENT upstream=$UPSTREAM_VER"
+            exit 0
+          fi
+          echo "Upstream $UPSTREAM_VER > current $CURRENT"
+
+          # Ensure the label exists (idempotent)
+          gh label create upstream-update --color 0075ca --description "Upstream fork dependency update" 2>/dev/null || true
+
+          # Skip if an issue for this version already exists
+          EXISTING=$(gh issue list \
+            --label upstream-update \
+            --state open \
+            --search "\"$UPSTREAM_TAG\"" \
+            --json number \
+            --jq 'length')
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "Issue already open for $UPSTREAM_TAG"
+            exit 0
+          fi
+
+          gh issue create \
+            --title "Upstream release: jupyterlab-git $UPSTREAM_TAG available" \
+            --label upstream-update \
+            --body "## Upstream update available
+
+| | Version |
+|---|---|
+| This fork | \`$CURRENT\` |
+| Upstream latest | \`$UPSTREAM_VER\` |
+
+**Release notes:** $UPSTREAM_URL
+
+**Compare diff:** https://github.com/jupyterlab/jupyterlab-git/compare/v${CURRENT}...${UPSTREAM_TAG}
+
+### Checklist before merging
+
+- [ ] Security fixes — always merge
+- [ ] JupyterLab compatibility bump — can break extension loading
+- [ ] New git operations in \`jupyterlab_git/handlers.py\` — may need OAuth token injection added
+- [ ] Changes to \`jupyterlab_git/git.py\` — author injection patch may need reapplying
+- [ ] Update version in \`package.json\` and tag a new release after merging"

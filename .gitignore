@@ -1,0 +1,12 @@
+node_modules/
+lib/
+jupyterlab_git/labextension/
+*.pyc
+__pycache__/
+dist/
+*.egg-info/
+.yarn/
+tsconfig.tsbuildinfo
+.pytest_cache/
+.claude/
+

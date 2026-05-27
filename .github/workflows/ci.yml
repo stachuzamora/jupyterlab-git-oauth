@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check jupyter_server_oauth_providers jupyterlab_git
+
+  test-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and test deps (skip JS build)
+        run: HATCH_BUILD_HOOKS_ENABLE=false pip install -e ".[dev]"
+      - name: Run unit tests
+        run: PYTHONPATH=. pytest tests/ --ignore=tests/test_api.py -v
+
+  test-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: yarn install
+      - run: yarn test
+
+  build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install build tools
+        run: pip install build jupyterlab
+      - name: Pre-build JS
+        run: jlpm install && jlpm run build:prod
+      - name: Build wheel and sdist
+        run: python -m build
+      - name: Verify wheel contents
+        run: |
+          pip install dist/*.whl
+          jupyter server extension list 2>&1 | grep jupyter_server_oauth_providers
+          git-credential-jupyterlab-oauth 2>&1 | true
