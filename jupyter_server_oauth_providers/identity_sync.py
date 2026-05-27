@@ -8,6 +8,7 @@ authenticated GitLab user and writes it to the per-repository git config.
 from __future__ import annotations
 
 import logging
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,8 +43,6 @@ PLACEHOLDER_EMAIL_PATTERNS: list[str] = [
     r"no-reply",
     r"nobody",
 ]
-
-import re
 
 _PLACEHOLDER_EMAIL_RE = re.compile(
     "|".join(PLACEHOLDER_EMAIL_PATTERNS), re.IGNORECASE

@@ -198,7 +198,7 @@ async def execute(
         get_logger().debug(
             "Code: {}\nOutput: {}\nError: {}".format(code, log_output, log_error)
         )
-    except BaseException as e:
+    except BaseException:
         code, output, error = -1, "", traceback.format_exc()
         get_logger().warning("Fail to execute {!s}".format(cmdline), exc_info=True)
     finally:
@@ -513,7 +513,7 @@ class Git:
 
         are_binary = dict()
         if text_code == 0:
-            for line in filter(lambda l: len(l) > 0, strip_and_split(text_output)):
+            for line in filter(lambda ln: len(ln) > 0, strip_and_split(text_output)):
                 diff, name = line.rsplit("\t", maxsplit=1)
                 are_binary[name] = diff.startswith("-\t-")
 
@@ -606,7 +606,7 @@ class Git:
         """
         Execute git log command & return the result.
         """
-        is_single_file = follow_path != None
+        is_single_file = follow_path is not None
         cmd = [
             "git",
             "log",
@@ -635,8 +635,8 @@ class Git:
             parsed_lines = []
             for line in line_array:
                 parsed_lines.extend(
-                    re.sub(r"\t\0|\0", "\t", l)
-                    for l in line.strip("\0\t").split("\0\0", maxsplit=1)
+                    re.sub(r"\t\0|\0", "\t", ln)
+                    for ln in line.strip("\0\t").split("\0\0", maxsplit=1)
                 )
             line_array = parsed_lines
 
@@ -1788,7 +1788,7 @@ class Git:
             file = pathlib.Path(path)
             content = file.read_text()
             return {"code": 0, "content": content}
-        except BaseException as error:
+        except BaseException:
             return {"code": -1, "content": ""}
 
     async def ensure_gitignore(self, path):
@@ -1981,13 +1981,13 @@ class Git:
 
         try:
             has_credential_helper = await self.check_credential_helper(path)
-            if has_credential_helper == False:
+            if not has_credential_helper:
                 return
         except RuntimeError as e:
             get_logger().error("Error checking credential helper: %s", e, exc_info=True)
             return
 
-        cache_daemon_required = has_credential_helper == True
+        cache_daemon_required = bool(has_credential_helper)
 
         if has_credential_helper is None:
             credential_helper: str = self._config.credential_helper

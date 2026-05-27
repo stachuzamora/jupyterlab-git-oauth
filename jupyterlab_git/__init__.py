@@ -5,7 +5,7 @@ from traitlets.config import Configurable
 
 try:
     from ._version import __version__
-except:
+except Exception:
     import warnings
 
     warnings.warn(

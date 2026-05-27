@@ -63,24 +63,28 @@ jobs:
             exit 0
           fi
 
+          cat > /tmp/issue-body.md << BODYEOF
+          ## Upstream update available
+
+          | | Version |
+          |---|---|
+          | This fork | \`$CURRENT\` |
+          | Upstream latest | \`$UPSTREAM_VER\` |
+
+          **Release notes:** $UPSTREAM_URL
+
+          **Compare diff:** https://github.com/jupyterlab/jupyterlab-git/compare/v${CURRENT}...${UPSTREAM_TAG}
+
+          ### Checklist before merging
+
+          - [ ] Security fixes — always merge
+          - [ ] JupyterLab compatibility bump — can break extension loading
+          - [ ] New git operations in \`jupyterlab_git/handlers.py\` — may need OAuth token injection added
+          - [ ] Changes to \`jupyterlab_git/git.py\` — author injection patch may need reapplying
+          - [ ] Update version in \`package.json\` and tag a new release after merging
+          BODYEOF
+
           gh issue create \
             --title "Upstream release: jupyterlab-git $UPSTREAM_TAG available" \
             --label upstream-update \
-            --body "## Upstream update available
-
-| | Version |
-|---|---|
-| This fork | \`$CURRENT\` |
-| Upstream latest | \`$UPSTREAM_VER\` |
-
-**Release notes:** $UPSTREAM_URL
-
-**Compare diff:** https://github.com/jupyterlab/jupyterlab-git/compare/v${CURRENT}...${UPSTREAM_TAG}
-
-### Checklist before merging
-
-- [ ] Security fixes — always merge
-- [ ] JupyterLab compatibility bump — can break extension loading
-- [ ] New git operations in \`jupyterlab_git/handlers.py\` — may need OAuth token injection added
-- [ ] Changes to \`jupyterlab_git/git.py\` — author injection patch may need reapplying
-- [ ] Update version in \`package.json\` and tag a new release after merging"
+            --body-file /tmp/issue-body.md

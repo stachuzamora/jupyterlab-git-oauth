@@ -29,10 +29,8 @@ Exit codes:
 
 from __future__ import annotations
 
-import glob
 import json
 import os
-import re
 import sys
 import time
 import urllib.error
@@ -179,8 +177,8 @@ def _jupyter_get(url: str, token: str) -> dict:
             if exc.code == 403 and not token:
                 # Server requires auth but no token — surface a clear message
                 raise RuntimeError(
-                    f"Jupyter Server requires authentication (HTTP 403). "
-                    f"Set JUPYTER_TOKEN or JUPYTER_SERVER_URL environment variable."
+                    "Jupyter Server requires authentication (HTTP 403). "
+                    "Set JUPYTER_TOKEN or JUPYTER_SERVER_URL environment variable."
                 ) from exc
             raise
         except (urllib.error.URLError, OSError) as exc:
@@ -264,7 +262,6 @@ def action_get() -> None:
 
     # Only handle GitLab URLs
     protocol = creds.get("protocol", "")
-    host = creds.get("host", "")
 
     if protocol and protocol not in ("http", "https"):
         _debug(f"Unsupported protocol '{protocol}' — not handling.")

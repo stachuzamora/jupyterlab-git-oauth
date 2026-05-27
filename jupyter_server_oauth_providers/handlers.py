@@ -773,7 +773,7 @@ class IdentitySyncHandler(_BaseOAuthHandler):
             self.write_json({"error": "provider_error", "detail": str(exc)}, status=502)
             return
 
-        from .identity_sync import CommitIdentity, IdentitySync
+        from .identity_sync import IdentitySync
 
         identity_sync = IdentitySync()
         identity = identity_sync.resolve_commit_identity(user_id, prov_user)

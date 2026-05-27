@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: "20"
       - run: yarn install
-      - run: yarn test
+      - run: yarn jest
 
   build-check:
     runs-on: ubuntu-latest

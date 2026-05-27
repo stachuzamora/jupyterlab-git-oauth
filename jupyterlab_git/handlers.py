@@ -894,7 +894,7 @@ class GitDiffNotebookHandler(GitHandler):
             prev_content = data["previousContent"]
             curr_content = data["currentContent"]
         except KeyError as e:
-            get_logger().error(f"Missing key in POST request.", exc_info=e)
+            get_logger().error("Missing key in POST request.", exc_info=e)
             raise tornado.web.HTTPError(
                 status_code=400, reason=f"Missing POST key: {e}"
             )
@@ -904,7 +904,7 @@ class GitDiffNotebookHandler(GitHandler):
                 prev_content, curr_content, base_content
             )
         except Exception as e:
-            get_logger().error(f"Error computing notebook diff.", exc_info=e)
+            get_logger().error("Error computing notebook diff.", exc_info=e)
             raise tornado.web.HTTPError(
                 status_code=500,
                 reason=f"Error diffing content: {e}.",
