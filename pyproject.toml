@@ -59,8 +59,8 @@ fields = ["description", "authors", "urls", "keywords"]
 packages = ["jupyterlab_git", "jupyter_server_oauth_providers"]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"jupyterlab_git/labextension/static/base_library.js" = "share/jupyter/labextensions/@jupyterlab/git/static/base_library.js"
-"install.json"                            = "share/jupyter/labextensions/@jupyterlab/git/install.json"
+"jupyterlab_git/labextension" = "share/jupyter/labextensions/@jupyterlab/git"
+"install.json" = "share/jupyter/labextensions/@jupyterlab/git/install.json"
 "jupyter-config/jupyter_server_oauth_providers.json" = "etc/jupyter/jupyter_server_config.d/jupyter_server_oauth_providers.json"
 
 [tool.hatch.build.hooks.custom]

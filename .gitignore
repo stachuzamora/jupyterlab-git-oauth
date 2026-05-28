@@ -4,6 +4,7 @@ jupyterlab_git/labextension/
 *.pyc
 __pycache__/
 dist/
+dist-ci/
 *.egg-info/
 .yarn/
 tsconfig.tsbuildinfo
