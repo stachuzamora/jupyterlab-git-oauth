@@ -25,7 +25,7 @@ class CustomBuildHook(BuildHookInterface):
                 self.app.display_info(f"[oauth-build] fetching upstream {filename} from {url}")
                 urllib.request.urlretrieve(url, dest)
         version_file = dest_dir / "_version.py"
-        version_file.write_text(f'__version__ = "{version}"\n')
+        version_file.write_text(f'__version__ = "{self.metadata.version}"\n')
 
     def finalize(self, version: str, build_data: dict, artifact_path: str) -> None:
         dest_dir = Path(self.root) / "jupyterlab_git"
