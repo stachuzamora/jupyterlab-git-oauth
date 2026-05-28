@@ -13,23 +13,6 @@ window.Request = fetchMod.Request;
 window.Headers = fetchMod.Headers;
 window.Response = fetchMod.Response;
 globalThis.Image = window.Image;
-globalThis.Range = function Range() {};
-const createContextualFragment = html => {
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  return div.children[0];
-};
-globalThis.Range.prototype.createContextualFragment = html =>
-  createContextualFragment(html);
-window.document.createRange = function createRange() {
-  return {
-    setEnd: () => {},
-    setStart: () => {},
-    getBoundingClientRect: () => ({ right: 0 }),
-    getClientRects: () => [],
-    createContextualFragment
-  };
-};
 window.focus = () => {
   /* JSDom throws "Not Implemented" */
 };
