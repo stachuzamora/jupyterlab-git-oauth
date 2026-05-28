@@ -4,6 +4,7 @@ const esModules = [
   '@codemirror',
   '@jupyter/',
   '@jupyterlab/',
+  '@microsoft/fast',
   'lib0',
   'nanoid',
   'nbdime',

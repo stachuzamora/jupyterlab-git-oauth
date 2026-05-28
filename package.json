@@ -125,6 +125,7 @@
     "schemaDir": "schema"
   },
   "styleModule": "style/index.js",
+  "packageManager": "yarn@3.6.4",
   "resolutions": {
     "@lumino/algorithm": "^2.0.1",
     "@lumino/collections": "^2.0.1",
