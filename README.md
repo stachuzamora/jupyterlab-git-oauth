@@ -1,3 +1,6 @@
+[![Publish to PyPI](https://github.com/stachuzamora/jupyterlab-git-oauth/actions/workflows/publish.yml/badge.svg)](https://github.com/stachuzamora/jupyterlab-git-oauth/actions/workflows/publish.yml)
+[![Publish to TestPyPI](https://github.com/stachuzamora/jupyterlab-git-oauth/actions/workflows/publish-test.yml/badge.svg)](https://github.com/stachuzamora/jupyterlab-git-oauth/actions/workflows/publish-test.yml)
+[![CI](https://github.com/stachuzamora/jupyterlab-git-oauth/actions/workflows/ci.yml/badge.svg)](https://github.com/stachuzamora/jupyterlab-git-oauth/actions/workflows/ci.yml)
 # jupyterlab-git-oauth
 
 JupyterLab Git extension with OAuth 2.0 Device Authorization Grant for GitLab and GitHub. Designed for Kubeflow Notebooks and JupyterHub environments where users are identified by OIDC/SSO headers rather than local Unix accounts.
