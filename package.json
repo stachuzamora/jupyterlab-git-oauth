@@ -44,7 +44,8 @@
     "install:extension": "jlpm build",
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w --sourceMap",
-    "watch:labextension": "jupyter labextension watch ."
+    "watch:labextension": "jupyter labextension watch .",
+    "test": "jest"
   },
   "dependencies": {
     "@emotion/react": "^11.9.0",

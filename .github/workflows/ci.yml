@@ -38,7 +38,7 @@ jobs:
           node-version: "20"
       - run: corepack enable
       - run: yarn install --immutable
-      - run: yarn jest
+      - run: yarn test
 
   build-check:
     runs-on: ubuntu-latest
