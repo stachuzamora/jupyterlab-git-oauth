@@ -11,7 +11,9 @@
 
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
-export interface IGitLabAuthStatus {
+export type OAuthProvider = 'gitlab' | 'github';
+
+export interface IOAuthStatus {
   connected: boolean;
   username?: string;
   display_name?: string;
@@ -21,8 +23,10 @@ export interface IGitLabAuthStatus {
   provider_url?: string;
 }
 
-function authApiUrl(path: string): string {
-  return URLExt.join(PageConfig.getBaseUrl(), 'api/oauth-providers/gitlab', path);
+export type IGitLabAuthStatus = IOAuthStatus;
+
+function authApiUrl(provider: OAuthProvider, path: string): string {
+  return URLExt.join(PageConfig.getBaseUrl(), `api/oauth-providers/${provider}`, path);
 }
 
 /**
@@ -32,23 +36,27 @@ function authApiUrl(path: string): string {
  * GitLab section entirely in that case.
  * Returns { connected: false } on transient errors so the connect card stays visible.
  */
-export async function getGitLabAuthStatus(): Promise<IGitLabAuthStatus | null> {
+export async function getOAuthStatus(provider: OAuthProvider): Promise<IOAuthStatus | null> {
   try {
-    const response = await fetch(authApiUrl('status'), {
+    const response = await fetch(authApiUrl(provider, 'status'), {
       method: 'GET',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' }
     });
-    if (response.status === 404) {
-      return null; // auth extension not installed
-    }
-    if (!response.ok) {
-      return { connected: false }; // transient error — keep UI visible
-    }
-    return (await response.json()) as IGitLabAuthStatus;
+    if (response.status === 404) return null;
+    if (!response.ok) return { connected: false };
+    return (await response.json()) as IOAuthStatus;
   } catch {
-    return { connected: false }; // network error — keep UI visible
+    return { connected: false };
   }
+}
+
+export async function getGitLabAuthStatus(): Promise<IOAuthStatus | null> {
+  return getOAuthStatus('gitlab');
+}
+
+export async function getGitHubAuthStatus(): Promise<IOAuthStatus | null> {
+  return getOAuthStatus('github');
 }
 
 /** Cookie-based XSRF token reader. */
@@ -61,7 +69,7 @@ function xsrfToken(): string {
  * Starts the GitLab device authorization flow.
  * Returns null if the auth extension is not installed.
  */
-export async function startGitLabDeviceFlow(): Promise<{
+export interface DeviceFlowStartResponse {
   user_code: string;
   verification_uri: string;
   verification_uri_complete?: string;
@@ -69,10 +77,12 @@ export async function startGitLabDeviceFlow(): Promise<{
   expires_in: number;
   interval: number;
   correlation_id: string;
-} | null> {
+}
+
+export async function startDeviceFlow(provider: OAuthProvider): Promise<DeviceFlowStartResponse | null> {
   try {
     const xsrf = xsrfToken();
-    const response = await fetch(authApiUrl('device/start'), {
+    const response = await fetch(authApiUrl(provider, 'device/start'), {
       method: 'POST',
       credentials: 'same-origin',
       body: JSON.stringify({}),
@@ -81,11 +91,62 @@ export async function startGitLabDeviceFlow(): Promise<{
         ...(xsrf ? { 'X-XSRFToken': xsrf } : {})
       }
     });
-    if (!response.ok) {
-      return null;
-    }
+    if (!response.ok) return null;
     return response.json();
   } catch {
     return null;
   }
+}
+
+export async function startGitLabDeviceFlow(): Promise<DeviceFlowStartResponse | null> {
+  return startDeviceFlow('gitlab');
+}
+
+export async function startGitHubDeviceFlow(): Promise<DeviceFlowStartResponse | null> {
+  return startDeviceFlow('github');
+}
+
+export type DeviceFlowPollResult =
+  | { status: 'approved'; username: string; email: string; slow_down?: boolean }
+  | { status: 'pending'; slow_down?: boolean }
+  | { status: 'expired'; slow_down?: boolean };
+
+export async function pollDeviceFlow(
+  provider: OAuthProvider,
+  correlationId: string,
+  deviceCode: string
+): Promise<DeviceFlowPollResult> {
+  const xsrf = xsrfToken();
+  const response = await fetch(authApiUrl(provider, 'device/poll'), {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(xsrf ? { 'X-XSRFToken': xsrf } : {})
+    },
+    body: JSON.stringify({ correlation_id: correlationId, device_code: deviceCode })
+  });
+  if (!response.ok) throw new Error(`Poll failed: ${response.status}`);
+  return response.json();
+}
+
+export async function pollGitLabDeviceFlow(correlationId: string, deviceCode: string): Promise<DeviceFlowPollResult> {
+  return pollDeviceFlow('gitlab', correlationId, deviceCode);
+}
+
+export async function disconnect(provider: OAuthProvider): Promise<void> {
+  const xsrf = xsrfToken();
+  await fetch(authApiUrl(provider, 'disconnect'), {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(xsrf ? { 'X-XSRFToken': xsrf } : {})
+    },
+    body: JSON.stringify({})
+  });
+}
+
+export async function disconnectGitLab(): Promise<void> {
+  return disconnect('gitlab');
 }

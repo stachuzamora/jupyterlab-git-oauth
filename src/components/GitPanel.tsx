@@ -8,7 +8,9 @@ import { JSONObject } from '@lumino/coreutils';
 import { Signal } from '@lumino/signaling';
 import {
   getGitLabAuthStatus,
-  IGitLabAuthStatus
+  getGitHubAuthStatus,
+  IGitLabAuthStatus,
+  IOAuthStatus
 } from '../gitlab-auth';
 import { WarningRounded as WarningRoundedIcon } from '@mui/icons-material';
 import Tab from '@mui/material/Tab';
@@ -165,6 +167,7 @@ export interface IGitPanelState {
    * Drives the connection banner shown above the commit box.
    */
   gitLabStatus: IGitLabAuthStatus | null;
+  gitHubStatus: IOAuthStatus | null;
 }
 
 /**
@@ -206,7 +209,8 @@ export class GitPanel extends React.Component<IGitPanelProps, IGitPanelState> {
       challengerCommit: null,
       stash: stash,
       tagsList: tagsList,
-      gitLabStatus: { connected: false } // optimistic default; updated on componentDidMount
+      gitLabStatus: { connected: false }, // optimistic default; updated on componentDidMount
+      gitHubStatus: { connected: false }
     };
   }
 
@@ -273,8 +277,17 @@ export class GitPanel extends React.Component<IGitPanelProps, IGitPanelState> {
       30_000
     );
 
+    this._refreshGitHubStatus();
+    this._gitHubPollId = window.setInterval(
+      () => this._refreshGitHubStatus(),
+      30_000
+    );
+
     // oauth-providers:changed fires the moment polling detects approval or disconnect.
-    this._gitLabAuthChangedHandler = () => { void this._refreshGitLabStatus(); };
+    this._gitLabAuthChangedHandler = () => {
+      void this._refreshGitLabStatus();
+      void this._refreshGitHubStatus();
+    };
     window.addEventListener('oauth-providers:changed', this._gitLabAuthChangedHandler);
   }
 
@@ -283,17 +296,27 @@ export class GitPanel extends React.Component<IGitPanelProps, IGitPanelState> {
     if (this._gitLabPollId !== null) {
       clearInterval(this._gitLabPollId);
     }
+    if (this._gitHubPollId !== null) {
+      clearInterval(this._gitHubPollId);
+    }
     if (this._gitLabAuthChangedHandler) {
       window.removeEventListener('oauth-providers:changed', this._gitLabAuthChangedHandler);
     }
   }
 
   private _gitLabPollId: number | null = null;
+  private _gitHubPollId: number | null = null;
   private _gitLabAuthChangedHandler: (() => void) | null = null;
 
   private _refreshGitLabStatus = async (): Promise<IGitLabAuthStatus | null> => {
     const status = await getGitLabAuthStatus();
     this.setState({ gitLabStatus: status });
+    return status;
+  };
+
+  private _refreshGitHubStatus = async (): Promise<IOAuthStatus | null> => {
+    const status = await getGitHubAuthStatus();
+    this.setState({ gitHubStatus: status });
     return status;
   };
 
@@ -394,6 +417,7 @@ export class GitPanel extends React.Component<IGitPanelProps, IGitPanelState> {
     return (
       <div className={panelWrapperClass}>
         {this._renderGitLabBanner()}
+        {this._renderGitHubBanner()}
         {this.state.repository !== null ? (
           <React.Fragment>
             {this._renderToolbar()}
@@ -585,6 +609,83 @@ export class GitPanel extends React.Component<IGitPanelProps, IGitPanelState> {
           }}
         >
           Connect to GitLab
+        </button>
+      </div>
+    );
+  }
+
+  private _renderGitHubBanner(): React.ReactElement | null {
+    const { gitHubStatus } = this.state;
+    const { commands } = this.props;
+
+    // null means extension not installed or GitHub not configured — hide
+    if (gitHubStatus === null) return null;
+
+    if (gitHubStatus.connected) {
+      const displayName =
+        gitHubStatus.display_name ?? gitHubStatus.username ?? '?';
+      return (
+        <div
+          style={{
+            margin: '4px 8px 0',
+            borderRadius: 6,
+            border: '1px solid #2ea44f55',
+            background: 'var(--jp-layout-color2)',
+            padding: '8px 10px',
+            fontFamily: 'var(--jp-ui-font-family)',
+            fontSize: 12
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, color: 'var(--jp-ui-font-color0)' }}>
+            {/* GitHub mark SVG */}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width={14} height={14} fill="currentColor">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            GitHub: {displayName}
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2ea44f', flexShrink: 0 }} />
+          </div>
+          <div style={{ padding: '4px 0 0', fontSize: 11, color: 'var(--jp-ui-font-color2)' }}>
+            Commits attributed to this identity automatically.{' '}
+            <span
+              role="button"
+              tabIndex={0}
+              style={{ cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={() => void commands.execute('github-auth:disconnect')}
+              onKeyDown={e => e.key === 'Enter' && void commands.execute('github-auth:disconnect')}
+            >
+              Disconnect
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        style={{
+          margin: '4px 8px 0',
+          borderRadius: 6,
+          border: '1px solid var(--jp-border-color2)',
+          background: 'var(--jp-layout-color2)',
+          padding: '10px',
+          fontFamily: 'var(--jp-ui-font-family)',
+          fontSize: 12
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontWeight: 600, color: 'var(--jp-ui-font-color0)' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width={14} height={14} fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          GitHub not connected
+        </div>
+        <p style={{ margin: '0 0 8px', color: 'var(--jp-ui-font-color2)', lineHeight: 1.4, fontSize: 11 }}>
+          Connect to GitHub so commits are attributed to your identity automatically.
+        </p>
+        <button
+          onClick={() => void commands.execute('github-auth:connect')}
+          style={{ width: '100%', padding: '6px 0', background: '#24292e', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+        >
+          Connect to GitHub
         </button>
       </div>
     );

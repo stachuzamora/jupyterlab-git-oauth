@@ -1,6 +1,6 @@
 {
   "name": "@jupyterlab/git",
-  "version": "0.52.4",
+  "version": "0.52.5",
   "description": "JupyterLab git extension with OAuth device flow for GitLab and GitHub",
   "keywords": [
     "jupyter",

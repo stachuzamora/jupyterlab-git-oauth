@@ -32,6 +32,8 @@ import { gitIcon } from './style/icons';
 import { CommandIDs, Git, IGitExtension } from './tokens';
 import { GitWidget } from './widgets/GitWidget';
 import { IEditorLanguageRegistry } from '@jupyterlab/codemirror';
+import { showDeviceFlowDialog } from './deviceflow';
+import { disconnect, startDeviceFlow } from './gitlab-auth';
 
 export { DiffModel } from './components/diff/model';
 export { NotebookDiff } from './components/diff/NotebookDiff';
@@ -193,6 +195,29 @@ async function activate(
       settings,
       translator
     );
+
+    // Register GitLab OAuth device flow commands
+    for (const provider of ['gitlab', 'github'] as const) {
+      const label = provider === 'github' ? 'GitHub' : 'GitLab';
+      app.commands.addCommand(`${provider}-auth:connect`, {
+        label: `Connect to ${label}`,
+        execute: async () => {
+          const flow = await startDeviceFlow(provider);
+          if (!flow) {
+            await showErrorMessage(`${label} Auth`, `Could not start device flow. Check ${provider.toUpperCase()}_CLIENT_ID is set.`);
+            return;
+          }
+          await showDeviceFlowDialog(flow, provider);
+        }
+      });
+      app.commands.addCommand(`${provider}-auth:disconnect`, {
+        label: `Disconnect from ${label}`,
+        execute: async () => {
+          await disconnect(provider);
+          window.dispatchEvent(new Event('oauth-providers:changed'));
+        }
+      });
+    }
 
     // Create the Git widget sidebar
     const gitPlugin = new GitWidget(
